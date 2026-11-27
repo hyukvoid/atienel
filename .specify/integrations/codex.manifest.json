@@ -1,0 +1,16 @@
+{
+  "integration": "codex",
+  "version": "1.4.6.dev0",
+  "installed_at": "2026-11-27T07:25:50.223010+00:00",
+  "files": {
+    ".agents/skills/speckit-analyze/SKILL.md": "68774b46f6f3a67001107255010d1033e59b999176f9b76476601b3f74b32b0b",
+    ".agents/skills/speckit-clarify/SKILL.md": "e2d2acce0c5ec1a7a83400bcd4d13646217ab27e5760f8a2c923c6dfe1225182",
+    ".agents/skills/speckit-constitution/SKILL.md": "8d548a3ad8dcfccd636746e0dc08849902491292df41062bbbc53de75e4faffd",
+    ".agents/skills/speckit-implement/SKILL.md": "e56523d5a5316239153b45d19facf5537a1f8bc241a5d5dfcf0b90b2bf95b5cd",
+    ".agents/skills/speckit-converge/SKILL.md": "7e693559cc02076c2f61b4976765ff834a355cb3353510298aaf5d1b422eb4dd",
+    ".agents/skills/speckit-plan/SKILL.md": "db87c2fc9da276169b30dc008b6e7ab81c2545e35e9c6c689371f219ef015f21",
+    ".agents/skills/speckit-checklist/SKILL.md": "ba714b9b3a01658d77d9a72b1a6cbfc7ce69916cf650ccd1cc45731652b501ee",
+    ".agents/skills/speckit-specify/SKILL.md": "cfa0755e1ccd5dbc672bd363628b61cfdc05d2e40a2780a65d37252bf58c5e31",
+    ".agents/skills/speckit-tasks/SKILL.md": "c20ddec4c6a41a19df6c06d549a194afab9f291ef4a69ca6d84c0f4adc43668c"
+  }
+}
