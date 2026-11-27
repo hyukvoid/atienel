@@ -4,6 +4,35 @@
 Docker, k3d, kubectl, uv, curl, jq, 로컬 빌드 이미지, 시드용 회고록과 runbook,
 승인자·조회자·수집자의 각 토큰을 준비한다. [배포 계약](contracts/kubernetes.md)
 
+## Phase 1 데이터 인프라 검증
+
+Docker 데몬이 실행 중인 상태에서 저장소 루트에서 실행한다. Phase 1은 Docker, k3d,
+kubectl, Make, OpenSSL을 사용한다.
+
+```bash
+make k3d-up
+make context
+make phase1-apply
+make phase1-verify
+```
+
+Makefile은 `k3d-atienel` 컨텍스트를 명시한다. 별도 kubectl 바이너리는
+`KUBECTL=/path/to/kubectl`로 지정할 수 있다. 첫 배포 시 데이터 자격 증명을 생성하고
+재적용 시 기존 Secret과 PVC를 사용한다. `postgresql-0`과 `valkey-0`은
+`1/1 Running`, 초기화 Job은 `Complete`가 기대 상태다. 검증 대상에는
+PVC, 벡터 확장, 마이그레이션, Consumer Group, MCP RBAC, metrics-server가 포함된다.
+
+저장소에 로컬로 접속하려면 다음 포트 포워딩을 별도 터미널에서 실행한다.
+
+```bash
+make port-forward
+make port-forward FORWARD_SERVICE=valkey PORT_FORWARD=6379:6379
+```
+
+Kubernetes API 허용 정책은 적용 시 서비스 IP와 단일 k3d 서버 IP를 사용한다.
+추론 제공자 주소 범위를 구성할 때는 `PROVIDER_CIDR`에 해당 CIDR을 지정해
+`make phase1-apply`를 실행한다.
+
 ## 환경 준비
 
 ```bash

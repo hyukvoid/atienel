@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  namespace: aiops-data
+spec:
+  selector:
+    app.kubernetes.io/name: postgresql
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: postgresql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-headless
+  namespace: aiops-data
+spec:
+  selector:
+    app.kubernetes.io/name: postgresql
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: postgresql
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: aiops-data
+spec:
+  serviceName: postgresql-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgresql
+    spec:
+      serviceAccountName: postgresql
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - image: timescale/timescaledb-ha:pg16.16-ts2.32.1-all-oss@sha256:d0646651515fa1c8c74e44a2c0e69c90ab457a5c07a11d6fd32ccf3db04570bc
+        args:
+        - postgres
+        - -c
+        - shared_buffers=256MB
+        - -c
+        - max_connections=50
+        env:
+        - name: POSTGRES_DB
+          value: atienel
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: postgres
+        resources:
+          requests:
+            cpu: 250m
+            memory: 768Mi
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+        name: postgresql
+        ports:
+        - name: postgresql
+          containerPort: 5432
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        startupProbe:
+          exec:
+            command: &id001
+            - pg_isready
+            - -h
+            - 127.0.0.1
+            - -U
+            - postgres
+            - -d
+            - atienel
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: *id001
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command: *id001
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 8Gi

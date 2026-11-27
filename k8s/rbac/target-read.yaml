@@ -1,0 +1,64 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: event-watcher-read
+  namespace: target-apps
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - events
+  verbs:
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: event-watcher-read
+  namespace: target-apps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: event-watcher-read
+subjects:
+- kind: ServiceAccount
+  name: event-watcher
+  namespace: aiops-core
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mcp-read
+  namespace: target-apps
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ''
+  resources:
+  - pods/log
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mcp-read
+  namespace: target-apps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mcp-read
+subjects:
+- kind: ServiceAccount
+  name: mcp-server
+  namespace: aiops-core

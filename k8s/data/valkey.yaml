@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+  namespace: aiops-data
+spec:
+  selector:
+    app.kubernetes.io/name: valkey
+  ports:
+  - name: valkey
+    port: 6379
+    targetPort: valkey
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey-headless
+  namespace: aiops-data
+spec:
+  selector:
+    app.kubernetes.io/name: valkey
+  ports:
+  - name: valkey
+    port: 6379
+    targetPort: valkey
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: valkey
+  namespace: aiops-data
+spec:
+  serviceName: valkey-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: valkey
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: valkey
+    spec:
+      serviceAccountName: valkey
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 999
+        fsGroup: 999
+      containers:
+      - image: valkey/valkey:9.2.1-alpine@sha256:3ad5a213cb1bc2fd4a113c89b6248a88655a6bf1dda69519d04e03cd3e3d2742
+        command:
+        - sh
+        - -ec
+        args:
+        - |
+          umask 077
+          printf "requirepass %s\n" "$VALKEYCLI_AUTH" > /tmp/valkey.conf
+          exec valkey-server /tmp/valkey.conf --dir /data --appendonly yes \
+            --maxmemory 192mb --maxmemory-policy noeviction
+        env:
+        - name: VALKEYCLI_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: valkey
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 400m
+            memory: 512Mi
+        name: valkey
+        ports:
+        - name: valkey
+          containerPort: 6379
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        startupProbe:
+          exec:
+            command: &id001
+            - sh
+            - -ec
+            - test "$(valkey-cli ping)" = PONG
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: *id001
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command: *id001
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 2Gi

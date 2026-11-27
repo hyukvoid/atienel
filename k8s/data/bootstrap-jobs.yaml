@@ -1,0 +1,146 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: data-bootstrap
+  namespace: aiops-data
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 2
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: data-bootstrap
+    spec:
+      serviceAccountName: data-bootstrap
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 1000
+      # K3s network policy selects Running Pods. Start both containers, then
+      # gate stream initialization on the successful database commit.
+      containers:
+      - name: migrate
+        image: timescale/timescaledb-ha:pg16.16-ts2.32.1-all-oss@sha256:d0646651515fa1c8c74e44a2c0e69c90ab457a5c07a11d6fd32ccf3db04570bc
+        command:
+        - sh
+        - -ec
+        args:
+        - |
+          trap 'touch /bootstrap/migration-finished' EXIT
+          export PGCONNECT_TIMEOUT=3
+          for attempt in $(seq 1 15); do
+            pg_isready -q -t 2 -h postgresql -U postgres -d atienel && break
+            sleep 2
+          done
+          psql -X -v ON_ERROR_STOP=1 -h postgresql -U postgres -d atienel <<'SQL'
+          BEGIN;
+          SELECT pg_advisory_xact_lock(41821217);
+          CREATE SCHEMA IF NOT EXISTS atienel_migrations;
+          CREATE TABLE IF NOT EXISTS atienel_migrations.applied (version integer PRIMARY KEY);
+          SELECT NOT EXISTS (SELECT 1 FROM atienel_migrations.applied WHERE version = 1) AS pending \gset
+          \if :pending
+          \i /migrations/001_incidents.sql
+          INSERT INTO atienel_migrations.applied VALUES (1);
+          \endif
+          SELECT NOT EXISTS (SELECT 1 FROM atienel_migrations.applied WHERE version = 2) AS pending \gset
+          \if :pending
+          \i /migrations/002_reports_runbooks.sql
+          INSERT INTO atienel_migrations.applied VALUES (2);
+          \endif
+          SELECT NOT EXISTS (SELECT 1 FROM atienel_migrations.applied WHERE version = 3) AS pending \gset
+          \if :pending
+          \i /migrations/003_jobs_idempotency.sql
+          INSERT INTO atienel_migrations.applied VALUES (3);
+          \endif
+          SELECT NOT EXISTS (SELECT 1 FROM atienel_migrations.applied WHERE version = 4) AS pending \gset
+          \if :pending
+          \i /migrations/004_roles.sql
+          INSERT INTO atienel_migrations.applied VALUES (4);
+          \endif
+          COMMIT;
+          SQL
+          touch /bootstrap/migration-succeeded
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: postgres
+        - name: DB_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: api
+        - name: DB_WORKER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: worker
+        - name: DB_MCP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: mcp
+        - name: DB_SEED_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: seed
+        - name: DB_RECONCILER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: reconciler
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 384Mi
+        volumeMounts:
+        - name: bootstrap
+          mountPath: /bootstrap
+        - name: migrations
+          mountPath: /migrations
+          readOnly: true
+      - name: create-consumer-group
+        image: valkey/valkey:9.2.1-alpine@sha256:3ad5a213cb1bc2fd4a113c89b6248a88655a6bf1dda69519d04e03cd3e3d2742
+        command:
+        - sh
+        - -ec
+        args:
+        - |
+          until [ -f /bootstrap/migration-finished ]; do
+            sleep 1
+          done
+          test -f /bootstrap/migration-succeeded
+          result=$(valkey-cli -h valkey XGROUP CREATE aiops:incidents:v1 aiops-workers-v1 0-0 MKSTREAM)
+          case "$result" in
+            OK|BUSYGROUP\ *) echo "$result" ;;
+            *) echo "$result" >&2; exit 1 ;;
+          esac
+        env:
+        - name: VALKEYCLI_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: data-credentials
+              key: valkey
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 128Mi
+        volumeMounts:
+        - name: bootstrap
+          mountPath: /bootstrap
+      volumes:
+      - name: bootstrap
+        emptyDir: {}
+      - name: migrations
+        configMap:
+          name: data-migrations

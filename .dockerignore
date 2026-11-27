@@ -1,0 +1,16 @@
+.git/
+Dockerfile*
+.dockerignore
+*.log*
+.env*
+coverage/
+node_modules/
+.venv/
+venv/
+**/__pycache__/
+*.secret.yaml
+secrets/
+.kube/
+kubeconfig*
+*.key
+*.crt
