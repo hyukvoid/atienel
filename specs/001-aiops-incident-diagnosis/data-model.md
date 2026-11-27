@@ -150,6 +150,9 @@ CREATE INDEX api_idempotency_incident ON api_idempotency (incident_id);
   생성한다. 검색에는 각각 `passage: `와 `query: ` 접두사를 사용한다.
   모델 교체 시 한 인덱스에 서로 다른 모델의 임베딩을 섞지 않는다.
   [공식 모델 카드](https://huggingface.co/intfloat/multilingual-e5-small)
+- Phase 3은 리비전 `614241f622f53c4eeff9890bdc4f31cfecc418b3`의
+  INT8 ONNX 산출물을 사용한다. 시드와 조회는 같은 리비전의 SentencePiece 모델과 XLM-R 토큰 ID 매핑, attention mask를 적용한
+  평균 풀링, L2 정규화를 사용한다. 모델과 입력 모드는 시드 매니페스트에 고정한다.
 - `ORDER BY embedding <=> $1::vector LIMIT $2`로 근사 후보를 구한다. 정확한 결과 정렬이
   필요하면 후보를 구체화한 뒤 거리와 ID 순으로 다시 정렬한다. 작은 검증 코퍼스에서는
   전체 벡터의 정확 검색 결과와 비교해 관련 문서가 결과에 포함되는지 확인한다. 반환 후보는

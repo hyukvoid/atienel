@@ -61,12 +61,12 @@ CrashLoopBackOff, HTTP 500 및 카운터 증가를 직접 관측한다.
 **독립 검증** — 워커 없이 인증된 MCP 클라이언트에서 두 도구를 호출한다.
 Pod 증거, 인용 가능한 문단, 입력 오류와 근거 누락을 구분하고 재시드 결과가 중복되지 않는지 확인한다.
 
-- [ ] T021 [P] [US3] `services/mcp-server/pyproject.toml`, `services/mcp-server/src/schemas.py`에 공식 문서 또는 Context7에서 시그니처를 확인한 FastMCP 4.x 의존성과 [MCP 계약](contracts/mcp.md)의 Pydantic 입출력 타입을 반영한다.
-- [ ] T022 [P] [US3] `services/mcp-server/src/embedding.py`, `data/runbooks/seed-manifest.json`에 동일하게 고정한 로컬 다국어 임베딩 리비전과 질의/문서 인코딩 방식을 정의하고 세 재현 유형에 대응하는 초기 Runbook·회고록을 준비한다.
-- [ ] T023 [P] [US3] `services/mcp-server/src/k8s_inspector.py`에 Pod UID 검증, 최근/이전 로그·이벤트·종료 코드·리소스 한도 조회, 부분 결과와 오류를 구현한다. T003·T021 이후 진행한다.
-- [ ] T024 [P] [US3] `services/mcp-server/src/seed_runbooks.py`, `k8s/data/seed-runbooks.yaml`에 문서 분할, 384차원 벡터 생성과 재실행 가능한 적재 Job을 구현한다. T007·T009·T022 이후 진행한다.
-- [ ] T025 [P] [US3] `services/mcp-server/src/runbook_rag.py`에 코사인 거리 검색, 후보 필터와 인용 위치 반환을 구현한다. T007·T021·T022 이후 진행한다.
-- [ ] T026 [US3] `services/mcp-server/src/main.py`, `services/mcp-server/Dockerfile`, `k8s/apps/mcp-server.yaml`에 읽기 전용 도구 두 개와 stateless `/mcp`, 내부 TLS, 워커 전용 Bearer 및 전용 DB 읽기 역할을 연결한다. T023~T025 이후 MCP wire에서 도구 검색과 스키마, 빈 결과 및 권한 실패를 확인한다.
+- [X] T021 [P] [US3] `services/mcp-server/pyproject.toml`, `services/mcp-server/src/schemas.py`에 공식 문서 또는 Context7에서 시그니처를 확인한 FastMCP 4.x 의존성과 [MCP 계약](contracts/mcp.md)의 Pydantic 입출력 타입을 반영한다.
+- [X] T022 [P] [US3] `services/mcp-server/src/embedding.py`, `data/runbooks/seed-manifest.json`에 동일하게 고정한 로컬 다국어 임베딩 리비전과 질의/문서 인코딩 방식을 정의하고 세 재현 유형에 대응하는 초기 Runbook·회고록을 준비한다.
+- [X] T023 [P] [US3] `services/mcp-server/src/k8s_inspector.py`에 Pod UID 검증, 최근/이전 로그·이벤트·종료 코드·리소스 한도 조회, 부분 결과와 오류를 구현한다. T003·T021 이후 진행한다.
+- [X] T024 [P] [US3] `services/mcp-server/src/seed_runbooks.py`, `k8s/data/seed-runbooks.yaml`에 문서 분할, 384차원 벡터 생성과 재실행 가능한 적재 Job을 구현한다. T007·T009·T022 이후 진행한다.
+- [X] T025 [P] [US3] `services/mcp-server/src/runbook_rag.py`에 코사인 거리 검색, 후보 필터와 인용 위치 반환을 구현한다. T007·T021·T022 이후 진행한다.
+- [X] T026 [US3] `services/mcp-server/src/main.py`, `services/mcp-server/Dockerfile`, `k8s/apps/mcp-server.yaml`에 읽기 전용 도구 두 개와 stateless `/mcp`, 내부 TLS, 워커 전용 Bearer 및 전용 DB 읽기 역할을 연결한다. T023~T025 이후 MCP wire에서 도구 검색과 스키마, 빈 결과 및 권한 실패를 확인한다.
 
 ## Phase 4 — Cold Path 및 HITL
 

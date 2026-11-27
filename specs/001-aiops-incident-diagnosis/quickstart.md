@@ -51,6 +51,27 @@ Docker 재시작 이후에도 감시자가 API에 접속할 수 있도록 현재
 중지해 503을 확인하고, 복원한 뒤 outbox 발행과 같은 키의 202를 검증한다. 이어서 해당 테스트 엔트리의
 유실을 재현하고 원래 작업 ID로 재발행되는지 확인한다.
 
+## Phase 3 MCP 및 Runbook 검증
+
+Phase 2가 배포된 `k3d-atienel`에서 실행한다. Docker, k3d, kubectl, OpenSSL, uv를 사용한다.
+
+```bash
+make phase3-apply
+make phase3-verify
+```
+
+배포 명령은 리비전과 체크섬을 고정한 INT8 ONNX 모델 및 SentencePiece 모델을 이미지에
+포함하고, 시드 Job 완료 후 MCP Deployment를 적용한다. 클러스터 내부 엔드포인트는
+`https://mcp-server.aiops-core.svc:8000/mcp`다. `aiops-core/mcp-access` Secret의
+`ca.crt`와 `token`이 클라이언트의 신뢰 루트와 Bearer 자격증명이다.
+
+검증 명령은 Pod 로그 조회 허용과 Pod 삭제 인가 거부를 확인한다. 같은 시드를 다시 실행해
+차원, 청크 수, 기존 ID가 유지되는지 확인한다. 로컬 포트 포워딩을 통해 내부 CA로 인증서를
+검증하고 FastMCP 클라이언트로 두 도구를 검색하고 호출한다. OOM fixture의 근거가 오래된
+경우 로컬 OOM을 다시 재현한다. 문서 인용, UID 불일치, 인가 실패, 엄격한 입력 검증도 확인한다.
+`make phase3-verify PHASE3_VERIFY_ARGS=--replace-pod`는 MCP Pod를 교체한 후
+이전 서버 세션 없이 같은 도구를 다시 호출한다.
+
 ## 환경 준비
 
 ```bash

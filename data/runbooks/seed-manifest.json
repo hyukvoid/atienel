@@ -1,0 +1,19 @@
+{
+  "model": {
+    "id": "intfloat/multilingual-e5-small",
+    "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "artifacts": {
+      "model.onnx": "onnx/model_qint8_avx512_vnni.onnx",
+      "sentencepiece.bpe.model": "sentencepiece.bpe.model"
+    },
+    "dimensions": 384,
+    "max_tokens": 512,
+    "prefixes": {"query": "query: ", "passage": "passage: "}
+  },
+  "documents": [
+    {"file": "oom.md", "kind": "RUNBOOK", "title": "OOMKilled 및 메모리 제한"},
+    {"file": "crashloop.md", "kind": "RUNBOOK", "title": "CrashLoopBackOff 및 시작 설정 오류"},
+    {"file": "http-5xx.md", "kind": "RUNBOOK", "title": "HTTP 5xx 오류율 급증"},
+    {"file": "fixture-retrospective.md", "kind": "POSTMORTEM", "title": "장애 재현 훈련 회고"}
+  ]
+}

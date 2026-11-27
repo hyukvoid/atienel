@@ -42,3 +42,10 @@ phase2-apply:
 
 phase2-verify:
 	./k8s/phase2.sh "$(KUBECTL)" "$(CLUSTER_NAME)" verify $(PHASE2_VERIFY_ARGS)
+
+.PHONY: phase3-apply phase3-verify
+phase3-apply:
+	./k8s/phase3.sh "$(KUBECTL)" "$(CLUSTER_NAME)" apply
+
+phase3-verify:
+	./k8s/phase3.sh "$(KUBECTL)" "$(CLUSTER_NAME)" verify $(PHASE3_VERIFY_ARGS)
