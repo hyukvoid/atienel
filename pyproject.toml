@@ -1,0 +1,15 @@
+[project]
+name = "atienel"
+version = "0.1.0"
+description = "Kubernetes AIOps Incident Investigation & Diagnosis Sentinel"
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = ["packages/*", "services/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
