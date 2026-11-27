@@ -9,3 +9,9 @@ Pod UID와 컨테이너 이름을 확인하고 `state.waiting.reason`의 `CrashL
 필수 환경 변수나 설정 파일 누락, 잘못된 시작 명령, 외부 의존성 연결 실패, 시작 프로브 실패를 구분한다. 처음 실패한 리비전과 직전 정상 리비전의 설정 참조 및 명령을 비교한다. 설정값의 이름만 기록하고 자격증명은 리포트에 넣지 않는다.
 
 검증된 설정 복구, 직전 정상 버전 롤백, 시작 프로브 조정 중 원인에 맞는 조치를 제안한다. 담당자 승인 후 재시작 횟수가 더 증가하지 않고 Pod가 Ready를 유지하는지 확인한다.
+
+## SC-003 로컬 설정 오류 fixture
+
+chaos-crash-fixture의 시작 로그에 invalid configuration이 있고 /fixture가 emptyDir이면
+같은 Pod에서 재시작해도 오류 플래그가 남는다. Pod 템플릿에 atienel.io/reset-fixture-state
+주석을 추가하는 롤아웃을 검토한다. 새 Pod의 빈 볼륨에 플래그가 없으므로 시작을 재시도할 수 있다.

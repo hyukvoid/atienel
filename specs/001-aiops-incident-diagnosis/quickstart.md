@@ -72,6 +72,45 @@ make phase3-verify
 `make phase3-verify PHASE3_VERIFY_ARGS=--replace-pod`는 MCP Pod를 교체한 후
 이전 서버 세션 없이 같은 도구를 다시 호출한다.
 
+## Phase 4 진단 및 승인 검증
+
+Phase 1~3이 준비된 `k3d-atienel`에서 실행한다. 기본 배포는 외부 모델 키 없이
+Pydantic AI TestModel을 사용하는 검증 모드다. Pod 근거와 인용은 실제 MCP 도구에서 조회한다.
+
+```bash
+make phase4-apply
+make phase4-verify
+```
+
+검증은 워커를 잠시 멈추고 새 OOMKilled/137의 접수 202, OPEN 티켓, Valkey 엔트리를
+확인한다. 워커를 재개해 MCP 근거가 포함된 NEEDS_REVIEW 리포트를 조회한 뒤 승인한다.
+조회자 승인 거부, 승인 재시도와 키 충돌, 워커 재시작 후 중복 메시지 처리, 잘못된 메시지의
+격리와 승인 전후 Deployment 설정 일치도 확인한다.
+
+검증이 접수 이후 중단됐으면 `PHASE4_VERIFY_INCIDENT_ID=<티켓 UUID> make phase4-verify`로
+같은 OOM 티켓의 발행 기록, 리포트, 승인과 중복 전달을 이어서 확인할 수 있다.
+
+실제 모델을 쓰려면 `aiops-core/worker-llm` Secret에 `LLM_API_KEY`, `LLM_MODEL`,
+`LLM_BASE_URL`을 설정한다. `LLM_BASE_URL`은 제공자의 OpenAI 호환 HTTPS 주소다.
+같은 키 이름의 env 파일을 사용해 Secret을 적용하려면 로컬의
+`secrets/phase4-llm.env`에 두면 된다. 이 경로는 Git과 Docker 빌드 컨텍스트에서 제외된다.
+`DIAGNOSIS_MODE=provider`와 제공자의 `PROVIDER_CIDR`을 지정해 `make phase4-apply`를 실행한다.
+
+## Phase 5 부하 및 복구 검증
+
+Phase 4를 verification 모드로 배포한 뒤 실행한다. k6와 py-spy는 Docker 이미지로
+실행하므로 호스트 바이너리를 별도로 설치할 필요가 없다.
+
+```bash
+DIAGNOSIS_MODE=verification make phase4-apply
+PHASE5_PROFILE=1 make phase5-load
+PHASE5_SLO=1 make phase5-verify
+make phase5-ci phase5-images
+```
+
+부하 결과, 확장 감지 표본, 승인 및 복구 검증은
+[Phase 5 결과](../../tests/validation-results.md)에 기록한다.
+
 ## 환경 준비
 
 ```bash

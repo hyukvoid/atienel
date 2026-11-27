@@ -86,6 +86,12 @@ class ContainerEvidence(ContractModel):
     termination_state: Literal["observed", "not_applicable", "unavailable"]
     termination: Termination | None
     limits: dict[str, str]
+    requests: dict[str, str] = Field(default_factory=dict)
+    image: str | None = None
+    readiness_probe: bool = False
+    liveness_probe: bool = False
+    empty_dir_mounts: list[str] = Field(default_factory=list)
+    http_fault_enabled: bool | None = None
 
 
 class LogEvidence(ContractModel):
@@ -103,6 +109,18 @@ class EventEvidence(ContractModel):
     observed_at: AwareDatetime
 
 
+class OwnerEvidence(ContractModel):
+    kind: str
+    name: PodName
+    uid: UUID
+
+
+class WorkloadEvidence(ContractModel):
+    kind: Literal["Deployment"] = "Deployment"
+    namespace: Literal["target-apps"]
+    name: PodName
+
+
 class K8sInspectorOutput(ContractModel):
     namespace: Literal["target-apps"]
     pod_name: PodName | None
@@ -113,6 +131,8 @@ class K8sInspectorOutput(ContractModel):
     logs: list[LogEvidence] = Field(max_length=16)
     events: list[EventEvidence] = Field(max_length=20)
     gaps: list[EvidenceGap]
+    owner: OwnerEvidence | None = None
+    workload: WorkloadEvidence | None = None
 
 
 class RunbookRagInput(ContractModel):

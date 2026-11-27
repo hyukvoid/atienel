@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiops-worker
+  namespace: aiops-core
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: aiops-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: aiops-worker
+    spec:
+      serviceAccountName: aiops-worker
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 100
+      volumes:
+      - name: mcp-ca
+        secret:
+          secretName: mcp-access
+          items:
+          - key: ca.crt
+            path: ca.crt
+      containers:
+      - name: aiops-worker
+        image: atienel-aiops-worker:phase4
+        imagePullPolicy: Never
+        resources:
+          requests:
+            cpu: 150m
+            memory: 256Mi
+          limits:
+            cpu: 750m
+            memory: 896Mi
+        volumeMounts:
+        - name: mcp-ca
+          mountPath: /mcp-tls
+          readOnly: true
+        readinessProbe:
+          exec:
+            command: ["test", "-f", "/tmp/consumer-ready"]
+          periodSeconds: 2
+        env:
+        - name: DIAGNOSIS_MODE
+          value: verification
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: worker-storage
+              key: postgres
+        - name: VALKEY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: worker-storage
+              key: valkey
+        - name: MCP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mcp-access
+              key: token
+        - name: LLM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: worker-llm
+              key: LLM_API_KEY
+              optional: true
+        - name: LLM_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: worker-llm
+              key: LLM_MODEL
+              optional: true
+        - name: LLM_BASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: worker-llm
+              key: LLM_BASE_URL
+              optional: true

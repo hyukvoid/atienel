@@ -1,0 +1,54 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.12.23'
+          python-version: '3.12'
+      - run: make phase5-ci
+
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: make phase5-images
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    needs: checks
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.12.23'
+          python-version: '3.12'
+      - name: Install k3d
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/k3d-io/k3d/releases/download/v5.9.0/k3d-linux-amd64 \
+            --output "$RUNNER_TEMP/k3d"
+          chmod +x "$RUNNER_TEMP/k3d"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Start local verification cluster
+        run: |
+          make k3d-up
+          make phase1-apply phase2-apply phase3-apply phase4-apply
+        env:
+          DIAGNOSIS_MODE: verification
+      - run: make phase5-verify
+        env:
+          PHASE5_SLO: '1'
+      - if: always()
+        run: make k3d-down

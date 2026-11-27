@@ -203,3 +203,16 @@ class RunbookRagOutput(ContractModel):
   추가 필드, 대상 밖 네임스페이스, 잘못된 UID, 삭제된 Pod, 이전 로그 없음, 빈 검색,
   검색 저장소 장애를 검증한다. 성공 응답을 Pydantic JSON 모드로 역검증하고 같은 도구를
   별도 복제본에 연속 호출해 세션 의존성이 없는지 확인한다.
+
+## 검토용 패치 근거
+
+출력에 선택적인 `owner`(직접 제어 소유자의 kind, name, UID)와 `workload`를 추가한다.
+`workload`는 Pod 템플릿의 `atienel.io/deployment` 선언이 앱 라벨과 일치하고 직접
+제어자인 ReplicaSet 이름이 선언된 이름과 Pod 템플릿 해시로 구성될 때만 제공한다.
+이 값은 Pod 증거에서 추론한 Deployment 대상이다. Deployment나 ReplicaSet API에는
+조회하지 않는다. 이름 또는 UID의 재확인이 실패하면 소유자와 대상 근거를 폐기한다.
+
+컨테이너 증거에 선언된 requests, 이미지, readiness/liveness 프로브 유무와 emptyDir
+마운트 경로를 추가한다. 로컬 chaos-app의 명시적인 HTTP fixture 스위치만 불리언으로
+제공한다. 임의의 환경 변수나 Secret 참조는 반환하지 않는다. 로그에는 Kubernetes가
+붙인 시각을 포함한다. 추가 필드에는 기본값이 있어 기존 응답도 읽을 수 있다.

@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from valkey.exceptions import ValkeyError
 
+from .approval_routes import router as approval_router
 from .auth import load_tokens
 from .connections import connections
 from .incident_routes import ApiError, router
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)
+app.include_router(approval_router)
 
 
 @app.exception_handler(ApiError)

@@ -75,25 +75,25 @@ Pod 증거, 인용 가능한 문단, 입력 오류와 근거 누락을 구분하
 **독립 검증** — 시드된 증거와 OPEN 티켓으로 작업을 발행한다. 두 MCP 도구의 결과로 리포트가
 저장되고 NEEDS_REVIEW로 전환되며, 워커 재시작과 동일 메시지 재전달에도 리포트가 하나인지 확인한다.
 
-- [ ] T027 [P] [US3] `services/aiops-worker/src/consumer.py`에 Consumer Group 읽기, PEL 회수, 버전·ID 검증, 잘못된 메시지 격리와 완료 확인 뒤 ACK/정리를 구현한다. T009·T011 이후 진행한다.
-- [ ] T028 [P] [US3] `services/aiops-worker/src/job_repository.py`에 DB 실행권, 제한 시간과 재시도, 토큰 검증 후 리포트·NEEDS_REVIEW·성공 상태 동시 커밋을 구현한다. T006~T009 이후 진행한다.
-- [ ] T029 [P] [US3] `services/aiops-worker/pyproject.toml`, `services/aiops-worker/src/agent.py`에 공식 문서 또는 Context7로 시그니처를 확인한 LangGraph 1.2·Pydantic AI 2.0 의존성과 엄격한 진단 출력, 인용 검증, 패치 또는 제안 불가 사유를 구현한다. T021 이후 진행한다.
-- [ ] T030 [US3] `services/aiops-worker/src/main.py`, `services/aiops-worker/src/graph.py`, `services/aiops-worker/Dockerfile`, `k8s/apps/aiops-worker.yaml`에 작업 소비부터 두 MCP 조회, 진단, 결과 저장과 종료까지 연결한다. TLS와 자격 증명은 워커에 주입하고 업무 리소스 한도를 명시한다. T020·T026~T029 이후 진행한다.
+- [X] T027 [P] [US3] `services/aiops-worker/src/consumer.py`에 Consumer Group 읽기, PEL 회수, 버전·ID 검증, 잘못된 메시지 격리와 완료 확인 뒤 ACK/정리를 구현한다. T009·T011 이후 진행한다.
+- [X] T028 [P] [US3] `services/aiops-worker/src/job_repository.py`에 DB 실행권, 제한 시간과 재시도, 토큰 검증 후 리포트·NEEDS_REVIEW·성공 상태 동시 커밋을 구현한다. T006~T009 이후 진행한다.
+- [X] T029 [P] [US3] `services/aiops-worker/pyproject.toml`, `services/aiops-worker/src/agent.py`에 공식 문서 또는 Context7로 시그니처를 확인한 LangGraph 1.2·Pydantic AI 2.0 의존성과 엄격한 진단 출력, 인용 검증, 패치 또는 제안 불가 사유를 구현한다. T021 이후 진행한다.
+- [X] T030 [US3] `services/aiops-worker/src/main.py`, `services/aiops-worker/src/graph.py`, `services/aiops-worker/Dockerfile`, `k8s/apps/aiops-worker.yaml`에 작업 소비부터 두 MCP 조회, 진단, 결과 저장과 종료까지 연결한다. TLS와 자격 증명은 워커에 주입하고 업무 리소스 한도를 명시한다. T020·T026~T029 이후 진행한다.
 
 ### US4 — 담당자 승인
 
 **독립 검증** — 저장된 NEEDS_REVIEW 티켓을 준비하고, 승인자와 비인가 사용자 및 OPEN 상태의
 승인 요청을 각각 보낸다. 첫 승인 기록이 유지되고 워크로드 설정이 바뀌지 않는지 확인한다.
 
-- [ ] T031 [US4] `services/aiops-api/src/approval_repository.py`, `services/aiops-api/src/approval_routes.py`, `services/aiops-api/src/main.py`에 POST 승인, 트랜잭션 행 잠금, 승인자·시각 기록, 멱등 재생과 충돌 처리를 구현한다. T016·T019 이후 저장된 리포트로 독립 검증하며, 전체 실행은 T030과 통합한다.
-- [ ] T032 `uv.lock`에서 workspace 의존성을 확정하고 `pyproject.toml`의 Ruff 설정으로 전체 서비스를 검사한다. T026·T030·T031 이후 고정 의존성으로 모든 서비스 이미지를 빌드하고 로컬 배포를 확인한다.
+- [X] T031 [US4] `services/aiops-api/src/approval_repository.py`, `services/aiops-api/src/approval_routes.py`, `services/aiops-api/src/main.py`에 POST 승인, 트랜잭션 행 잠금, 승인자·시각 기록, 멱등 재생과 충돌 처리를 구현한다. T016·T019 이후 저장된 리포트로 독립 검증하며, 전체 실행은 T030과 통합한다.
+- [X] T032 `uv.lock`에서 workspace 의존성을 확정하고 `pyproject.toml`의 Ruff 설정으로 전체 서비스를 검사한다. T026·T030·T031 이후 고정 의존성으로 모든 서비스 이미지를 빌드하고 로컬 배포를 확인한다.
 
 ## Phase 5 — E2E·부하·프로파일링 검증
 
-- [ ] T033 [P] `tests/e2e/test_incident_lifecycle.py`에 로컬 k3d에서 OOMKilled/137 → OPEN → NEEDS_REVIEW → APPROVED를 검증할 E2E를 작성한다. 동일 이벤트 재전송, 증거 인용, 승인 재시도와 설정 유지도 비교하고, CrashLoopBackOff 및 HTTP 5xx는 각각 독립 수용 사례로 검증한다.
-- [ ] T034 [P] `tests/load/aiops_api_hpa.js`에 k6로 고유 신호와 멱등 재전송을 생성하는 ramp/hold/cooldown 부하를 작성한다. 202 비율·p95, 중복 여부, CPU와 HPA 1→2→1 관측 및 큐 적체를 기록할 수 있게 한다.
-- [ ] T035 [P] `tests/profiling/profile_worker.sh`에 통제된 로컬 프로파일링 환경에서 py-spy로 워커를 샘플링하고 flamegraph를 생성하는 절차를 작성한다. 유휴/진단 구간을 비교하며, 임시 프로파일링 권한은 검증 환경에만 둔다.
-- [ ] T036 `tests/e2e/test_publication_recovery.py`로 Valkey 발행 실패 뒤 재접수, 워커 중단 뒤 재회수를 시험하고, T033~T035를 순서대로 실행해 [성공 기준](spec.md#measurable-outcomes), HPA 이벤트, 메모리 실측과 프로파일링 증거를 `tests/validation-results.md`에 기록한다. T032~T035 이후 진행한다.
+- [X] T033 [P] `tests/e2e/test_incident_lifecycle.py`에 로컬 k3d에서 OOMKilled/137 → OPEN → NEEDS_REVIEW → APPROVED를 검증할 E2E를 작성한다. 동일 이벤트 재전송, 증거 인용, 승인 재시도와 설정 유지도 비교하고, CrashLoopBackOff 및 HTTP 5xx는 각각 독립 수용 사례로 검증한다.
+- [X] T034 [P] `tests/load/aiops_api_hpa.js`에 k6로 고유 신호와 멱등 재전송을 생성하는 ramp/hold/cooldown 부하를 작성한다. 202 비율·p95, 중복 여부, CPU와 HPA 1→2→1 관측 및 큐 적체를 기록할 수 있게 한다.
+- [X] T035 [P] `tests/profiling/profile_worker.sh`에 통제된 로컬 프로파일링 환경에서 py-spy로 워커를 샘플링하고 flamegraph를 생성하는 절차를 작성한다. 유휴/진단 구간을 비교하며, 임시 프로파일링 권한은 검증 환경에만 둔다.
+- [X] T036 `tests/e2e/test_publication_recovery.py`로 Valkey 발행 실패 뒤 재접수, 워커 중단 뒤 재회수를 시험하고, T033~T035를 순서대로 실행해 [성공 기준](spec.md#measurable-outcomes), HPA 이벤트, 메모리 실측과 프로파일링 증거를 `tests/validation-results.md`에 기록한다. T032~T035 이후 진행한다.
 
 ## Dependencies & Execution Order
 

@@ -10,7 +10,9 @@ from .schemas import (
     K8sInspectorInput,
     K8sInspectorOutput,
     LogEvidence,
+    OwnerEvidence,
     Termination,
+    WorkloadEvidence,
 )
 
 SERVICE_ACCOUNT = Path("/var/run/secrets/kubernetes.io/serviceaccount")
@@ -36,7 +38,47 @@ def timestamp(value: str | None) -> datetime | None:
     return datetime.fromisoformat(value).astimezone(UTC) if value else None
 
 
+def owner_evidence(pod):
+    metadata = pod["metadata"]
+    reference = next(
+        (item for item in metadata.get("ownerReferences", []) if item.get("controller")), None
+    )
+    if not reference:
+        return None, None
+    owner = OwnerEvidence(
+        kind=reference["kind"], name=reference["name"], uid=UUID(reference["uid"])
+    )
+    labels = metadata.get("labels", {})
+    declared = metadata.get("annotations", {}).get("atienel.io/deployment")
+    template_hash = labels.get("pod-template-hash")
+    if (
+        owner.kind == "ReplicaSet"
+        and reference.get("apiVersion") == "apps/v1"
+        and declared
+        and declared == labels.get("app.kubernetes.io/name")
+        and template_hash
+        and owner.name == f"{declared}-{template_hash}"
+    ):
+        return owner, WorkloadEvidence(namespace=metadata["namespace"], name=declared)
+    return owner, None
+
+
+def fixture_http_switch(pod, definition):
+    if (
+        pod["metadata"].get("annotations", {}).get("atienel.io/deployment") != "chaos-app"
+        or definition["name"] != "chaos-app"
+    ):
+        return None
+    for env in definition.get("env", []):
+        if env["name"] == "HTTP_FAULT_ENABLED":
+            return {"true": True, "false": False}.get(env.get("value"))
+    return None
+
+
 def container_evidence(pod):
+    empty_dirs = {
+        volume["name"] for volume in pod["spec"].get("volumes", []) if "emptyDir" in volume
+    }
     for kind, spec_key, status_key in GROUPS:
         statuses = {s["name"]: s for s in pod.get("status", {}).get(status_key, ())}
         for definition in pod["spec"].get(spec_key, ()):
@@ -61,6 +103,16 @@ def container_evidence(pod):
                 ),
                 termination=term,
                 limits=definition.get("resources", {}).get("limits", {}),
+                requests=definition.get("resources", {}).get("requests", {}),
+                image=definition.get("image"),
+                readiness_probe="readinessProbe" in definition,
+                liveness_probe="livenessProbe" in definition,
+                empty_dir_mounts=[
+                    mount["mountPath"]
+                    for mount in definition.get("volumeMounts", [])
+                    if mount["name"] in empty_dirs
+                ],
+                http_fault_enabled=fixture_http_switch(pod, definition),
             )
 
 
@@ -114,6 +166,7 @@ async def read_log(client, path, headers, request, container, previous):
         params={
             "container": container,
             "previous": str(previous).lower(),
+            "timestamps": "true",
             "tailLines": request.tail_lines,
             "sinceSeconds": request.lookback_seconds,
             "limitBytes": MAX_LOG_BYTES + 1,
@@ -207,13 +260,15 @@ async def inspect(request: K8sInspectorInput, client) -> K8sInspectorOutput:
             else:
                 output.gaps.append(item)
     if output.containers:
-        gap = pod_gap(await get_pod(client, path, headers), request.pod_uid)
+        verified = await get_pod(client, path, headers)
+        gap = pod_gap(verified, request.pod_uid)
         if gap:
             output.status = "not_found"
             output.containers.clear()
             output.logs.clear()
             output.gaps = [gap]
             return output
+        output.owner, output.workload = owner_evidence(verified)
     if any(item.code != "not_applicable" for item in output.gaps):
         output.status = "partial"
     return output

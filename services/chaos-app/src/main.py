@@ -28,6 +28,8 @@ if mode is None:
     @app.get("/faults/http-500")
     async def http_error():
         global http_5xx
+        if os.environ.get("HTTP_FAULT_ENABLED", "true") != "true":
+            raise HTTPException(404, "HTTP fault fixture disabled")
         http_5xx += 1
         return JSONResponse({"error": "simulated failure"}, status_code=500)
 
