@@ -15,6 +15,7 @@ k3d-up:
 			--k3s-arg '--disable=traefik,servicelb@server:0' --wait; \
 	fi
 	$(KUBECTL) config use-context k3d-$(CLUSTER_NAME)
+	@for i in $$(seq 1 60); do $(K) -n kube-system get deployment/metrics-server >/dev/null 2>&1 && break; sleep 2; done
 	$(K) -n kube-system rollout status deployment/metrics-server --timeout=180s
 
 k3d-down:
