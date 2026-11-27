@@ -160,3 +160,7 @@ CREATE INDEX api_idempotency_incident ON api_idempotency (incident_id);
 
 [PostgreSQL 16 제약 조건](https://www.postgresql.org/docs/16/ddl-constraints.html) ·
 [PostgreSQL 16 행 잠금](https://www.postgresql.org/docs/16/sql-select.html)
+
+발행 복구 역할은 유실된 엔트리에 대한 만료 실행권을 해제할 수 있도록
+`investigation_jobs`의 `state`, `execution_token`, `execution_expires_at`에도
+열 단위 UPDATE 권한을 갖는다. Phase 2 배포에서 이 권한을 적용한다.

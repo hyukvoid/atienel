@@ -33,6 +33,24 @@ Kubernetes API 허용 정책은 적용 시 서비스 IP와 단일 k3d 서버 IP�
 추론 제공자 주소 범위를 구성할 때는 `PROVIDER_CIDR`에 해당 CIDR을 지정해
 `make phase1-apply`를 실행한다.
 
+## Phase 2 Hot Path 검증
+
+Phase 1이 준비된 `k3d-atienel` 클러스터에서 실행한다. Python 3.12가 필요하다.
+
+```bash
+make phase2-apply
+make phase2-verify
+make phase2-verify PHASE2_VERIFY_ARGS=--recovery
+```
+
+배포 명령은 세 이미지를 빌드하고 k3d에 임포트한 뒤 워크로드와 API HPA를 적용한다.
+Docker 재시작 이후에도 감시자가 API에 접속할 수 있도록 현재 k3d 노드 IP로 네트워크 정책을 다시 적용한다.
+검증 명령은 OOMKilled/137, 워처의 202, PostgreSQL의 OPEN 티켓과 Valkey 작업이 같은 장애에
+연결되는지 확인한다. 멱등 재요청, HTTP 500 카운터와 급증 접수, CrashLoopBackOff 접수도
+확인한다. CrashLoop fixture는 검증 후 재시작한다. `--recovery`는 Valkey를 잠시
+중지해 503을 확인하고, 복원한 뒤 outbox 발행과 같은 키의 202를 검증한다. 이어서 해당 테스트 엔트리의
+유실을 재현하고 원래 작업 ID로 재발행되는지 확인한다.
+
 ## 환경 준비
 
 ```bash

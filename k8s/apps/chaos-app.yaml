@@ -1,0 +1,206 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-app
+  namespace: target-apps
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chaos-app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: chaos-app
+        atienel.io/http-metrics: "true"
+    spec:
+      serviceAccountName: chaos-app
+      automountServiceAccountToken: false
+      containers:
+      - name: chaos-app
+        image: atienel-chaos-app:phase2
+        imagePullPolicy: Never
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+        ports:
+        - name: http
+          containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 2
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 2
+        env:
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaos-app
+  namespace: target-apps
+spec:
+  selector:
+    app.kubernetes.io/name: chaos-app
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-oom-fixture
+  namespace: target-apps
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chaos-oom-fixture
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: chaos-oom-fixture
+    spec:
+      serviceAccountName: chaos-oom-fixture
+      automountServiceAccountToken: false
+      containers:
+      - name: chaos-oom-fixture
+        image: atienel-chaos-app:phase2
+        imagePullPolicy: Never
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        ports:
+        - name: http
+          containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 2
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 2
+        env:
+        - name: FIXTURE_MODE
+          value: "oom"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaos-oom-fixture
+  namespace: target-apps
+spec:
+  selector:
+    app.kubernetes.io/name: chaos-oom-fixture
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-crash-fixture
+  namespace: target-apps
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chaos-crash-fixture
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: chaos-crash-fixture
+    spec:
+      serviceAccountName: chaos-crash-fixture
+      automountServiceAccountToken: false
+      volumes:
+      - name: fixture-state
+        emptyDir: {}
+      containers:
+      - name: chaos-crash-fixture
+        image: atienel-chaos-app:phase2
+        imagePullPolicy: Never
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        volumeMounts:
+        - name: fixture-state
+          mountPath: /fixture
+        ports:
+        - name: http
+          containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 2
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 2
+        env:
+        - name: FIXTURE_MODE
+          value: "crash"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaos-crash-fixture
+  namespace: target-apps
+spec:
+  selector:
+    app.kubernetes.io/name: chaos-crash-fixture
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http

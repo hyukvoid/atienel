@@ -31,28 +31,28 @@ description: "Atienel 장애 감지 및 AI 진단 구현 태스크"
 
 ### 공통 기반
 
-- [ ] T011 `packages/shared/src/atienel_shared/contracts.py` 및 `packages/shared/pyproject.toml`에 [REST](contracts/rest.md) 이벤트·응답·오류와 [Stream](contracts/stream.md) v1 메시지의 정규화와 입력 검증을 구현한다. 스키마 직렬화에서 날짜, UUID, enum, 추가 필드 처리를 계약과 맞춘다.
+- [X] T011 `packages/shared/src/atienel_shared/contracts.py` 및 `packages/shared/pyproject.toml`에 [REST](contracts/rest.md) 이벤트·응답·오류와 [Stream](contracts/stream.md) v1 메시지의 정규화와 입력 검증을 구현한다. 스키마 직렬화에서 날짜, UUID, enum, 추가 필드 처리를 계약과 맞춘다.
 
 ### US1 — 테스트 장애 재현
 
 **독립 검증** — 워처와 워커가 중지된 상태에서 세 엔드포인트를 각각 호출하여 종료 코드 137,
 CrashLoopBackOff, HTTP 500 및 카운터 증가를 직접 관측한다.
 
-- [ ] T012 [P] [US1] `services/chaos-app/src/main.py`, `services/chaos-app/src/fixtures.py`에 테스트 전용 OOM·설정 오류 재현 제어와 HTTP 500/Pod별 계측을 구현한다. fixture 재설정과 재현 범위는 [Kubernetes 계약](contracts/kubernetes.md)을 따른다.
-- [ ] T013 [US1] `services/chaos-app/Dockerfile`, `k8s/apps/chaos-app.yaml`에 로컬 전용 재현 서비스, 전용 fixture Deployment와 명시적 CPU·메모리 예산을 구성하고 세 재현을 독립 확인한다. T012 이후 진행한다.
+- [X] T012 [P] [US1] `services/chaos-app/src/main.py`, `services/chaos-app/src/fixtures.py`에 테스트 전용 OOM·설정 오류 재현 제어와 HTTP 500/Pod별 계측을 구현한다. fixture 재설정과 재현 범위는 [Kubernetes 계약](contracts/kubernetes.md)을 따른다.
+- [X] T013 [US1] `services/chaos-app/Dockerfile`, `k8s/apps/chaos-app.yaml`에 로컬 전용 재현 서비스, 전용 fixture Deployment와 명시적 CPU·메모리 예산을 구성하고 세 재현을 독립 확인한다. T012 이후 진행한다.
 
 ### US2 — 실시간 감지와 중복 없는 접수
 
 **독립 검증** — 진단 워커와 MCP 없이 신호를 수집하고, 최초 접수의 202와 중복 방지,
 발행 장애의 503 및 복구 후 재시도를 확인한다.
 
-- [ ] T014 [P] [US2] `services/event-watcher/src/observer.py`, `services/event-watcher/src/http_metrics.py`에 대상 Core Warning·Pod 종료 list/watch, 재연결, 카운터 기반 5xx 검출, OOM 신호 상관관계와 고정 이벤트 ID를 구현한다. T011 이후 진행한다.
-- [ ] T015 [P] [US2] `services/aiops-api/src/ingestion_repository.py`에 비동기 psycopg 접수 트랜잭션, 이벤트 식별 충돌 판정, 키 예약 및 티켓·작업 단일 생성을 구현한다. T008·T011 이후 진행한다.
-- [ ] T016 [P] [US2] `services/aiops-api/src/auth.py`에 토큰 검증, 안정적인 주체 ID 매핑, 조회·접수·승인 권한 구분을 구현한다.
-- [ ] T017 [P] [US2] `services/event-watcher/src/webhook.py`, `services/event-watcher/src/main.py`에 키와 본문을 유지하는 비동기 웹훅 전송, 일시 오류 재시도, 접수 결과 로깅을 구현한다. T011·T014 이후 진행한다.
-- [ ] T018 [US2] `services/aiops-api/src/publication.py`, `services/aiops-api/src/reconciler.py`에 작업 행 잠금, 상한 있는 XADD, 발행·응답 기록, 미발행 복구와 유실 대조를 구현한다. T009·T015 이후 진행한다.
-- [ ] T019 [US2] `services/aiops-api/src/main.py`, `services/aiops-api/src/incident_routes.py`에 POST 접수, GET 조회, liveness/readiness, 멱등 응답 재생과 계약 오류를 연결한다. DB 커밋과 스트림 발행 확인 뒤 202를 반환한다. T016·T018 이후 진행한다.
-- [ ] T020 [US2] `services/event-watcher/Dockerfile`, `services/aiops-api/Dockerfile`, `k8s/apps/hot-path.yaml`, `k8s/hpa/aiops-api.yaml`에 워처·API·복구 프로세스 배포와 metrics-server 기반 API HPA를 구성한다. T017·T019 이후 [접수 검증 절차](quickstart.md)를 실행한다.
+- [X] T014 [P] [US2] `services/event-watcher/src/observer.py`, `services/event-watcher/src/http_metrics.py`에 대상 Core Warning·Pod 종료 list/watch, 재연결, 카운터 기반 5xx 검출, OOM 신호 상관관계와 고정 이벤트 ID를 구현한다. T011 이후 진행한다.
+- [X] T015 [P] [US2] `services/aiops-api/src/ingestion_repository.py`에 비동기 psycopg 접수 트랜잭션, 이벤트 식별 충돌 판정, 키 예약 및 티켓·작업 단일 생성을 구현한다. T008·T011 이후 진행한다.
+- [X] T016 [P] [US2] `services/aiops-api/src/auth.py`에 토큰 검증, 안정적인 주체 ID 매핑, 조회·접수·승인 권한 구분을 구현한다.
+- [X] T017 [P] [US2] `services/event-watcher/src/webhook.py`, `services/event-watcher/src/main.py`에 키와 본문을 유지하는 비동기 웹훅 전송, 일시 오류 재시도, 접수 결과 로깅을 구현한다. T011·T014 이후 진행한다.
+- [X] T018 [US2] `services/aiops-api/src/publication.py`, `services/aiops-api/src/reconciler.py`에 작업 행 잠금, 상한 있는 XADD, 발행·응답 기록, 미발행 복구와 유실 대조를 구현한다. T009·T015 이후 진행한다.
+- [X] T019 [US2] `services/aiops-api/src/main.py`, `services/aiops-api/src/incident_routes.py`에 POST 접수, GET 조회, liveness/readiness, 멱등 응답 재생과 계약 오류를 연결한다. DB 커밋과 스트림 발행 확인 뒤 202를 반환한다. T016·T018 이후 진행한다.
+- [X] T020 [US2] `services/event-watcher/Dockerfile`, `services/aiops-api/Dockerfile`, `k8s/apps/hot-path.yaml`, `k8s/hpa/aiops-api.yaml`에 워처·API·복구 프로세스 배포와 metrics-server 기반 API HPA를 구성한다. T017·T019 이후 [접수 검증 절차](quickstart.md)를 실행한다.
 
 ## Phase 3 — MCP 및 Runbook 임베딩
 

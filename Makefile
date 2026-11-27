@@ -35,3 +35,10 @@ port-forward:
 
 lint:
 	uv run ruff check .
+
+.PHONY: phase2-apply phase2-verify
+phase2-apply:
+	./k8s/phase2.sh "$(KUBECTL)" "$(CLUSTER_NAME)" apply
+
+phase2-verify:
+	./k8s/phase2.sh "$(KUBECTL)" "$(CLUSTER_NAME)" verify $(PHASE2_VERIFY_ARGS)

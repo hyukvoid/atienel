@@ -7,17 +7,21 @@ context=$2
 k() { "$kubectl_bin" --context "$context" "$@"; }
 data() { k -n aiops-data "$@"; }
 
-apply() {
-    k apply -f k8s/namespaces.yaml
-    k apply -f k8s/rbac/
-
-    local service_ip node_ip existing
+apply_network_policies() {
+    local service_ip node_ip
     service_ip=$(k -n default get service kubernetes -o jsonpath='{.spec.clusterIP}')
     node_ip=$(k get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
     test -n "$service_ip" && test -n "$node_ip"
     sed -e "s/KUBERNETES_SERVICE_IP/$service_ip/g" -e "s/KUBERNETES_NODE_IP/$node_ip/g" \
         k8s/network-policies.yaml | k apply -f -
+}
 
+apply() {
+    k apply -f k8s/namespaces.yaml
+    k apply -f k8s/rbac/
+
+    apply_network_policies
+    local existing
     if [[ -n ${PROVIDER_CIDR:-} ]]; then
         k apply -f - <<YAML
 apiVersion: networking.k8s.io/v1
@@ -106,6 +110,7 @@ verify() {
 
 case $3 in
     apply) apply ;;
+    network) apply_network_policies ;;
     verify) verify ;;
     *) exit 2 ;;
 esac

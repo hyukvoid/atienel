@@ -2,7 +2,7 @@
 name = "atienel-shared"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2.10", "pydantic-settings>=2.7"]
+dependencies = ["pydantic>=2.10,<3"]
 
 [build-system]
 requires = ["hatchling"]

@@ -148,3 +148,5 @@ spec:
 남은 노트북 예산에 포함하여 측정한다. 나머지 구성 요소는 단일 인스턴스로 유지한다.
 리소스 단위와 스케줄링 검증은 공식 문서를 따른다.
 [Kubernetes 컨테이너 리소스 관리](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+
+CrashLoop fixture 재설정은 로컬 운영자가 fixture Deployment를 재시작해 수행한다.
